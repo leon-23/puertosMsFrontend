@@ -1,42 +1,94 @@
+import Vue from 'vue'
+import Vuex from 'vuex'
+
+Vue.use(Vuex)
+
 const initialState = () => {
   return {
-    puerto: {
-      _id: 0,
-      nombre: "",
-      puerto: "",
-      dominio: "",
-      servidor: "",
-    },
-    puertos: [
+    hidden: false,
+    loading: true,
+    headers: [
       {
-        _id: 1,
-        nombre: "Angular",
-        puerto: "4200",
-        dominio: "alguno",
-        servidor: "apache",
+        text: "Nombre",
+        value: "puerto.nombre"
       },
       {
-        _id: 2,
-        nombre: "Node",
-        puerto: "3000",
-        dominio: "alguno",
-        servidor: "apache",
+        text: "Puerto",
+        value: "puerto.puerto"
       },
       {
-        _id: 3,
-        nombre: "Java",
-        puerto: "8080",
-        dominio: "alguno",
-        servidor: "tomcat",
+        text: "Dominio",
+        value: "puerto.dominio"
       },
-    ]
-  };
-};
+      {
+        text: "Servidor",
+        value: "puerto.servidor"
+      },
+      {
+        sortable: false,
+        text: "Actions",
+        value: "actions"
+      }
+    ],
 
-export default new Vuex.Store({
+    puerto:{
+      id: 0,
+      nombre: '',
+      puerto:  '',
+      dominio: '',
+      servidor: '',
+    },
+
+    items: [],
+    search: undefined
+  }
+ };
+
+const findPuerto = (array, id)=>{
+   return array.findIndex( item => item.puerto._id === id );
+}
+
+const store = new Vuex.Store({
   state: { ...initialState() },
 
   mutations: {
- 
-  }
+     
+     setItems(state, items){
+       state.items = items;
+     },
+     setLoading(state){
+       state.loading = !state.loading
+     },
+     setPuerto(state, puerto){
+       state.puerto = {...puerto };
+     },
+     resetPuerto(state){
+       state.puerto = {...initialState().puerto }
+     },
+     addPuerto(state, puerto){
+       const items = state.items.slice();
+       items.push({  puerto });
+
+       state.items = items;
+     },
+     updatePuerto(state, puerto){
+       const idx = findPuerto(state.items, puerto._id);
+
+       if(idx >= 0){
+         const items = state.items.slice();
+         items[idx] = { puerto }
+         state.items = items
+       }            
+     },
+     deletePuerto(state, id){  
+       const idx = findPuerto(state.items, id);
+
+       if(idx >= 0)
+         state.items.splice(idx, 1);
+     },
+
+     
+  },
 });
+
+export default store;

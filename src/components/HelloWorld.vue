@@ -1,16 +1,12 @@
 <template>
   <v-container id="data-tables" tag="section">
-    <base-material-card
-      color="primary"
-      icon="mdi-account-cog"
-      inline
-      class="px-5 py-3"
-    >
-      <template v-slot:after-heading>
-        <div class="display-2 font-weight-light">
+      <v-card
+        class="mx-auto"
+        max-width="1000"
+      >
+      <v-card-title>
           Listado de Puertos
-        </div>
-      </template>
+      </v-card-title>
 
       <v-text-field
         v-model="search"
@@ -28,11 +24,11 @@
         <v-btn
           fab
           dark
-          absolute
-          color="secondary"
-          right
+          relative
+          color="primary"
+          rigth
           top
-          @click="createUser"
+          @click="toggleDialog"
         >
           <v-icon>mdi-plus</v-icon>
         </v-btn>
@@ -40,11 +36,12 @@
 
 
       <v-data-table
-        :headers="headers"
-        :items="items"
+        :headers="$store.state.headers"
+        :items="$store.state.items"
         :search.sync="search"
         :sort-by="['name', 'office']"
         :sort-desc="[false, true]"
+        :loading="$store.state.loading"
         multi-sort
         class="elevation-1"
       >
@@ -65,7 +62,7 @@
             fab
             class="px-1 ml-1"
             x-small
-            @click="editUser(item)"
+            @click="editPuerto(item)"
           >
             <v-icon small v-text="'mdi-pencil'" />
           </v-btn>
@@ -75,94 +72,95 @@
             fab
             class="px-1 ml-1"
             x-small
-            @click="deleteUser(item)"
+            @click="deletePuerto(item.puerto._id)"
           >
             <v-icon small v-text="'mdi-delete'" />
           </v-btn>
         </template>
       </v-data-table>
+    </v-card>
     
-    </base-material-card>
+    <v-container id="modal-puertos" tag="section">
+    <v-row justify="center">
+      <v-dialog v-model="dialog" persistent max-width="800">
+        <v-card>
+          <v-card-title class="headline">
+            Crear Puerto
+          </v-card-title>
+            
+          <v-form
+              ref="form"
+              lazy-validation
+              max-width="600"
+              max-heigth="400"
+              padding="50"
+              class="modal-form"
+          >
+
+            <v-text-field
+              v-model="$store.state.puerto.nombre"
+              label="Nombre"
+              required
+            ></v-text-field>
+
+            <v-text-field
+              v-model="$store.state.puerto.puerto"
+              label="Puerto"
+              :counter="4"
+              :maxlength="4"
+              required
+              @blur="findPuerto($event)"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="$store.state.puerto.dominio"
+              label="Dominio"
+              required
+            ></v-text-field>
+
+            <v-text-field
+              v-model="$store.state.puerto.servidor"
+              label="Servidor"
+              required
+            ></v-text-field>
+
+            <v-btn class="mr-4" @click="savePuerto"> Guardar</v-btn>
+            <v-btn @click="$store.commit('resetPuerto')">Clear</v-btn>
+          </v-form>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" text @click="toggleDialog()">Cancelar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
+    </v-container>
   </v-container>
+
+
 </template>
 
 <script>
 import puertoService from '../services/puertoService';
 
-
 export default {
   name: "PuertosDataTables",
 
+  computed: {
+
+  },
+
   data: () => ({
-    hidden: false,
-    headers: [
-      {
-        text: "Id",
-        value: "puerto._id"
-      },
-      {
-        text: "Nombre",
-        value: "puerto.nombre"
-      },
-      {
-        text: "Puerto",
-        value: "puerto.puerto"
-      },
-      {
-        text: "Dominio",
-        value: "puerto.dominio"
-      },
-      {
-        text: "Servidor",
-        value: "puerto.servidor"
-      },
-      {
-        sortable: false,
-        text: "Actions",
-        value: "actions"
-      }
-    ],
-    items: [
-      {
-        puerto: {
-          _id: 1,
-          nombre: "Angular",
-          puerto: "4200",
-          dominio: "por definir",
-          servidor: "ngx"
-        }
-      },
-      {
-        puerto: {
-          _id: 2,
-          nombre: "Node",
-          puerto: "3000",
-          dominio: "por definir",
-          servidor: "azure"
-        }
-      },
-      {
-        puerto: {
-          _id: 3,
-          nombre: "Java",
-          puerto: "8080",
-          dominio: "por definir",
-          servidor: "tomcat"
-        }
-      }
-    ],
-    search: undefined
+    dialog: false,
+    search: undefined,
+    loading: true,
   }),
-  async mounted() {
-    console.log("mounted");
   
-    this.loadData();
-    
+  async mounted() {
+    this.loadData(); 
   },
-  computed:{
 
-
-  },
   methods: {
     async loadData() {
 
@@ -179,49 +177,191 @@ export default {
                         }
                       })
 
-        this.setItems(data)
+        this.$store.commit('setItems', data);
+        this.$store.commit('setLoading');
+        
     }catch(error){
       console.error(error);
+      this.errorMsj();
     }
 
+    },
+    toggleDialog(){
+      this.dialog = !this.dialog;
+
+      if(!this.dialog)
+        this.$store.commit('resetPuerto')
+    },
+    async savePuerto() {
+     
+      const msj = this.validPuerto()
+
+      if(!msj){
+        const puerto = { ...this.$store.state.puerto };
+
+        console.log("save puerto", puerto)
+
+        puerto._id
+        ? await this.updatePuerto(puerto)
+        : await this.crearPuerto(puerto)
+
+         this.toggleDialog();
+      }
+      else{
+        alert(msj)
+      }
 
     },
-    setItems(items){
-      this.items = items;
+    async crearPuerto(puerto){
+      console.log("crearPuerto");
+      try{
+        const response = await puertoService.save(puerto)
+        console.log(response);
+
+        this.$store.commit('addPuerto', response.data.data);
+
+        this.successMsj(`Se creo el Puerto ${puerto.nombre}`)
+        
+
+      }catch(error){
+        console.error(error);
+        this.errorMsj();
+      }
     },
-    createUser() {
-      console.log("create");
-      this.$router.push({
-        name: "OperatorsForm",
-        params: {
-          option: 1 // option 1 to create
-        }
-      });
+     async updatePuerto(puerto){
+
+      try{
+        const response = await puertoService.update(puerto)
+        console.log(response);
+
+        this.$store.commit('updatePuerto', puerto)
+
+        this.successMsj(`Se edito el Puerto ${puerto.nombre}`)
+
+      }catch(error){
+        console.error(error);
+        this.errorMsj();
+      }
     },
     showUser(item) {
-      console.log(item);
-      this.$router.push({
-        name: "OperatorsForm",
-        params: {
-          option: 2, // option 2 to show
-          userData: item
+       console.log(item);
+       //this.$swal('Hello Vue world!!!');
+       this.$swal.fire({
+        position: 'top-end',
+        icon: 'success',
+        title: 'Your work has been saved',
+        showConfirmButton: false,
+        timer: 1500,
+        showClass: {
+          popup: 'animated fadeInDown faster'
+        },
+        hideClass: {
+          popup: 'animated fadeOutUp faster'
         }
-      });
+      })
     },
-    editUser(item) {
-      console.log(item);
-      this.$router.push({
-        name: "OperatorsForm",
-        params: {
-          option: 3, // option 3 to edit
-          userData: item
+    editPuerto(item) {
+      console.log(item.puerto);
+      this.$store.commit('setPuerto', item.puerto);
+
+      this.toggleDialog();
+    },
+    deletePuerto(id) {
+      
+        this.$swal.fire({
+          title: 'Está Seguro?',
+          text: "No se puede revertir esto!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Si, Eliminalo!'
+        }).then( async (result) => {
+          if (result.value) {
+
+            try{
+              const response = await puertoService.deletePuerto(id);
+              const puerto = {...response.data.data };
+
+              this.$store.commit('deletePuerto', puerto._id);
+
+              this.$swal.fire(
+                'Eliminado!',
+                `El puerto ${puerto.nombre} ha sido eliminado`,
+                'success'
+              ) 
+            }catch(error){
+                console.error(error);
+                this.errorMsj();
+              }            
+          }
+        })
+    },
+    validPuerto(){
+      const puerto = {...this.$store.state.puerto};
+      let msj = ""
+
+      if(!puerto.nombre)
+        msj += "* El nombre del puerto es requerido! \n";
+      if(!puerto.puerto)
+        msj += "* El numero del puerto es requerido! \n";
+      if(puerto.puerto.length !== 4)
+        msj += "* El puerto debe tener 4 caracteres! \n";
+      if(!parseInt(puerto.puerto))
+        msj += "* El puerto solo debe poseer numeros! \n"
+      if(!puerto.dominio)
+        msj += "* El dominio es requerido! \n";
+      if(!puerto.servidor)
+        msj += "* El servidor  es requerido! \n";
+      
+      return msj;
+    },
+    async findPuerto(event){
+      console.log(event.target.value)
+      const puerto = event.target.value;
+
+      if(puerto.length === 4 && parseInt(puerto)){
+        const response = await puertoService.findByPort(puerto);
+
+        if(!response.data.data){
+            alert(`El puerto ${puerto} no esta disponible`)
+            event.target.focus();
         }
-      });
+      }
     },
-    deleteUser(item) {
-      console.log(item);
-      console.log("Delete");
+    successMsj(title){
+      this.$swal.fire({
+          position: 'center',
+          icon: 'success',
+          title,
+          showConfirmButton: false,
+          timer: 1500,
+          showClass: {
+            popup: 'animated fadeInDown faster'
+          },
+          hideClass: {
+            popup: 'animated fadeOutUp faster'
+          }
+        })
+    },
+    errorMsj(){
+      this.$swal.fire({
+        position: 'center',
+        icon: 'error',
+        title: 'Ups hemos cometido un error',
+        showConfirmButton: false,
+        timer: 1500
+      })
     }
   }
 };
 </script>
+
+<style>
+  form.modal-form {
+    padding-top: 10px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-bottom: 10px;
+  }
+</style>

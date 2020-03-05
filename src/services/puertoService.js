@@ -6,20 +6,24 @@ class PuertoService {
 		return axios.get('/puertos');
 	}
 
-	static getPuerto(id){
+	static findById(id){
 		return axios.get(`/puertos/${id}`);	
 	}
 
-	static savePuerto(data){
+	static save(data){
 		return axios.post(`/puertos`, data);	
 	}
 
-	static updatePuerto(data){
+	static update(data){
 		return axios.put(`/puertos`, data);	
 	}
 
 	static deletePuerto(id){
 		return axios.delete(`/puertos/${id}`);	
+	}
+
+	static findByPort(puerto){
+		return axios.get(`/puertos/find/${puerto}`)
 	}
 } 
 

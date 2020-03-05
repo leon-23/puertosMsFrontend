@@ -10,19 +10,18 @@
           alt="Vuetify Logo"
           class="shrink mr-2"
           contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
+          src="./assets/logo.jpg"
           transition="scale-transition"
-          width="40"
+          height="100"
+          max-width="60"
         />
 
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
+        <v-btn
+          href="http://localhost:8080/"
+          text
+           >
+          <span class="mr-2">M@n Solutions</span>
+        </v-btn>
       </div>
 
       <v-spacer></v-spacer>
