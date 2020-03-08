@@ -1,12 +1,21 @@
 <template>
-  <v-container id="data-tables" tag="section">
-      <v-card
-        class="mx-auto"
-        max-width="1000"
+  <v-container
+     id="data-tables"
+      tag="section"
+      class="mt-10"
+  >
+
+      <MaterialCard
+        color="primary"
+        icon="mdi-wifi"
+        inline
+        class="px-5 py-3"
       >
-      <v-card-title>
-          Listado de Puertos
-      </v-card-title>
+        <template v-slot:after-heading>
+          <div class="display-1 font-weight-light">        
+              Listado de Puertos
+          </div>
+        </template>
 
       <v-text-field
         v-model="search"
@@ -18,19 +27,16 @@
         style="max-width: 250px;"
       />
 
-      <v-divider class="mt-3" />
+      <v-divider class="mt-2 mb-5" />
 
-        <v-fab-transition>
+        <v-fab-transition class="mt-5">
         <v-btn
-          fab
+          outlined
           dark
-          relative
           color="primary"
-          rigth
-          top
           @click="toggleDialog"
         >
-          <v-icon>mdi-plus</v-icon>
+          Agregar 
         </v-btn>
       </v-fab-transition>
 
@@ -39,11 +45,11 @@
         :headers="$store.state.headers"
         :items="$store.state.items"
         :search.sync="search"
-        :sort-by="['name', 'office']"
+        :sort-by="['puerto.nombre', 'puerto.puerto']"
         :sort-desc="[false, true]"
         :loading="$store.state.loading"
         multi-sort
-        class="elevation-1"
+        class="mt-5"
       >
         <template v-slot:item.actions="{ item }">
           <v-btn
@@ -52,7 +58,7 @@
             fab
             class="px-1 ml-1"
             x-small
-            @click="showUser(item)"
+            @click="showPuerto(item)"
           >
             <v-icon small v-text="'mdi-eye'" />
           </v-btn>
@@ -62,7 +68,7 @@
             fab
             class="px-1 ml-1"
             x-small
-            @click="editPuerto(item)"
+            @click="setPuerto(item)"
           >
             <v-icon small v-text="'mdi-pencil'" />
           </v-btn>
@@ -78,14 +84,14 @@
           </v-btn>
         </template>
       </v-data-table>
-    </v-card>
+    </MaterialCard>
     
     <v-container id="modal-puertos" tag="section">
     <v-row justify="center">
       <v-dialog v-model="dialog" persistent max-width="800">
         <v-card>
           <v-card-title class="headline">
-            Crear Puerto
+           {{ getTitleModal }}
           </v-card-title>
             
           <v-form
@@ -101,37 +107,47 @@
               v-model="$store.state.puerto.nombre"
               label="Nombre"
               required
+              :readonly="readonly"
             ></v-text-field>
 
             <v-text-field
               v-model="$store.state.puerto.puerto"
               label="Puerto"
+              placeholder="8080"
               :counter="4"
               :maxlength="4"
               required
               @blur="findPuerto($event)"
+              :readonly="readonly"
             ></v-text-field>
             
             <v-text-field
               v-model="$store.state.puerto.dominio"
               label="Dominio"
               required
+              :readonly="readonly"
             ></v-text-field>
 
             <v-text-field
               v-model="$store.state.puerto.servidor"
               label="Servidor"
               required
+              :readonly="readonly"
             ></v-text-field>
-
-            <v-btn class="mr-4" @click="savePuerto"> Guardar</v-btn>
-            <v-btn @click="$store.commit('resetPuerto')">Clear</v-btn>
+            
+            <v-btn v-if="!readonly"
+              class="mr-4 primary"
+              @click="savePuerto"
+              :disabled="validPuerto() ? true : false"
+              > Guardar</v-btn>
+            <v-btn v-if="!readonly" @click="$store.commit('resetPuerto')">Clear</v-btn>
           </v-form>
 
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="green darken-1" text @click="toggleDialog()">Cancelar</v-btn>
+            <v-btn color="red darken-1" text @click="toggleDialog()">Cancelar</v-btn>
           </v-card-actions>
+        
         </v-card>
       </v-dialog>
     </v-row>
@@ -142,21 +158,33 @@
 </template>
 
 <script>
+import MaterialCard from './MaterialCard';
 import puertoService from '../services/puertoService';
 
 export default {
-  name: "PuertosDataTables",
+  name: "PuertosDataTable",
 
-  computed: {
-
+  components: {
+    MaterialCard,
   },
 
   data: () => ({
     dialog: false,
     search: undefined,
     loading: true,
+    readonly : false,
   }),
   
+  computed: {
+    getTitleModal(){
+      return  !this.$store.state.puerto._id 
+        ? 'Crear Puerto'
+        : this.readonly
+        ? 'Ver Puerto'
+        : 'Editar Puerto';
+    },
+  },
+
   async mounted() {
     this.loadData(); 
   },
@@ -178,19 +206,23 @@ export default {
                       })
 
         this.$store.commit('setItems', data);
-        this.$store.commit('setLoading');
         
     }catch(error){
       console.error(error);
       this.errorMsj();
+    }
+    finally{
+      this.$store.commit('setLoading');
     }
 
     },
     toggleDialog(){
       this.dialog = !this.dialog;
 
-      if(!this.dialog)
+      if(!this.dialog){
         this.$store.commit('resetPuerto')
+        this.readonly = false
+      }
     },
     async savePuerto() {
      
@@ -198,8 +230,6 @@ export default {
 
       if(!msj){
         const puerto = { ...this.$store.state.puerto };
-
-        console.log("save puerto", puerto)
 
         puerto._id
         ? await this.updatePuerto(puerto)
@@ -243,28 +273,17 @@ export default {
         this.errorMsj();
       }
     },
-    showUser(item) {
-       console.log(item);
-       //this.$swal('Hello Vue world!!!');
-       this.$swal.fire({
-        position: 'top-end',
-        icon: 'success',
-        title: 'Your work has been saved',
-        showConfirmButton: false,
-        timer: 1500,
-        showClass: {
-          popup: 'animated fadeInDown faster'
-        },
-        hideClass: {
-          popup: 'animated fadeOutUp faster'
-        }
-      })
+    showPuerto(item) {
+      console.log(item);      
+      this.readonly = true;
+      this.setPuerto(item)
+
     },
-    editPuerto(item) {
+    setPuerto(item) {
       console.log(item.puerto);
       this.$store.commit('setPuerto', item.puerto);
 
-      this.toggleDialog();
+      this.dialog = true;
     },
     deletePuerto(id) {
       
@@ -317,10 +336,9 @@ export default {
       return msj;
     },
     async findPuerto(event){
-      console.log(event.target.value)
       const puerto = event.target.value;
 
-      if(puerto.length === 4 && parseInt(puerto)){
+      if(!this.readonly && puerto.length === 4 && parseInt(puerto)){
         const response = await puertoService.findByPort(puerto);
 
         if(!response.data.data){
