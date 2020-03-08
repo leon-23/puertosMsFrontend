@@ -63,7 +63,7 @@
         fluid
       >
         <v-row
-          align="right"
+          align="center"
           justify="center"
         >
 

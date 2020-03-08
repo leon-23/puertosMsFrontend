@@ -46,7 +46,7 @@
         :items="$store.state.items"
         :search.sync="search"
         :sort-by="['puerto.nombre', 'puerto.puerto']"
-        :sort-desc="[false, true]"
+        :sort-desc="[false, false]"
         :loading="$store.state.loading"
         multi-sort
         class="mt-5"
@@ -90,7 +90,7 @@
     <v-row justify="center">
       <v-dialog v-model="dialog" persistent max-width="800">
         <v-card>
-          <v-card-title class="headline">
+          <v-card-title class="headline font-weight-light title">
            {{ getTitleModal }}
           </v-card-title>
             
@@ -215,7 +215,7 @@ export default {
       this.$store.commit('setLoading');
     }
 
-    },
+  },
     toggleDialog(){
       this.dialog = !this.dialog;
 
@@ -341,9 +341,15 @@ export default {
       if(!this.readonly && puerto.length === 4 && parseInt(puerto)){
         const response = await puertoService.findByPort(puerto);
 
-        if(!response.data.data){
+        if(response.data.data){
+
+          const Q = response.data.data._id !== this.$store.state.puerto._id;
+
+          if(Q){
             alert(`El puerto ${puerto} no esta disponible`)
-            event.target.focus();
+            console.log(event.target)
+            event.target.focus()
+          }
         }
       }
     },
