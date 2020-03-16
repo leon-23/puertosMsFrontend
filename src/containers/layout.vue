@@ -4,6 +4,7 @@
       v-model="drawer"
       app
       clipped
+      dark
     >
       <v-list dense>
         <v-list-item link @click="goTo('Puertos')">
@@ -30,7 +31,9 @@
       clipped-left
       class="mb-10 pb-10 primary"
     >
-      <v-app-bar-nav-icon @click.stop="toggleDrawer" />
+      <v-app-bar-nav-icon
+       @click.stop="toggleDrawer" 
+       class="white--text"/>
       <v-toolbar-title>
         <v-img
           alt="Vuetify Logo"
@@ -48,17 +51,17 @@
           @click="goTo('Puertos')"
           text
            >
-          <span class="mr-2">M@n Solutions</span>
+          <span class="mr-2 white--text">M@n Solutions</span>
         </v-btn>
       </v-toolbar-title>
      
       <v-spacer></v-spacer>
 
        <v-toolbar-title>
-          <span class="mr-2"> {{ user.username }} </span>
+          <span class="mr-2 white--text"> {{ user.username }} </span>
       </v-toolbar-title>
 
-      <v-btn icon @click="logout">
+      <v-btn icon class="white--text" @click="logout">
         <v-icon>mdi-exit-to-app</v-icon>
       </v-btn>
 
@@ -117,7 +120,12 @@
       goTo(address){
         this.$router.push({name: address})
       }
-
     },
 }
 </script>
+
+<style>
+    i.mdi-menu {
+      font-color : white;
+    }
+</style>

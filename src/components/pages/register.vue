@@ -140,7 +140,7 @@ import storageService from '../../services/storageService';
       const token = storageService.getToken();
 
       if(user && token)
-        this.$router.push({name: 'Puertos'});
+        this.goTo('Puertos');
     },
     methods: {
       async submit () {
@@ -150,7 +150,7 @@ import storageService from '../../services/storageService';
            await userService.register({...this.form })
           //const data = response.data.users
           
-          this.$router.push({ name: 'Login' })
+          this.goTo('Login')
 
         }catch(error){
           console.log(error.response.data.message.errors);
