@@ -1,21 +1,21 @@
 <template>
   <v-container
      id="data-tables"
-      tag="section"
-      class="mt-10"
+     tag="section"
+    class="mt-10"
   >
 
-      <MaterialCard
+    <MaterialCard
         color="primary"
         icon="mdi-wifi"
         inline
         class="px-5 py-3"
-      >
-        <template v-slot:after-heading>
-          <div class="display-1 font-weight-light">        
+    >
+      <template v-slot:after-heading>
+        <div class="display-1 font-weight-light">        
               Listado de Puertos
-          </div>
-        </template>
+        </div>
+      </template>
 
       <v-text-field
         v-model="search"
@@ -106,8 +106,8 @@
             <v-text-field
               v-model="$store.state.puerto.nombre"
               label="Nombre"
-              required
               :readonly="readonly"
+              :rules="[rules.required]"
             ></v-text-field>
 
             <v-text-field
@@ -116,7 +116,7 @@
               placeholder="8080"
               :counter="4"
               :maxlength="4"
-              required
+              :rules="[rules.required, rules.min]"
               @blur="findPuerto($event)"
               :readonly="readonly"
             ></v-text-field>
@@ -124,14 +124,14 @@
             <v-text-field
               v-model="$store.state.puerto.dominio"
               label="Dominio"
-              required
               :readonly="readonly"
+              :rules="[rules.required]"
             ></v-text-field>
 
             <v-text-field
               v-model="$store.state.puerto.servidor"
               label="Servidor"
-              required
+              :rules="[rules.required]"
               :readonly="readonly"
             ></v-text-field>
             
@@ -173,6 +173,10 @@ export default {
     search: undefined,
     loading: true,
     readonly : false,
+    rules: {
+        required: value => !!value || 'Required.',
+        min: v => v.length === 4 || 'Min  characters',
+      },
   }),
   
   computed: {
@@ -208,7 +212,7 @@ export default {
         this.$store.commit('setItems', data);
         
     }catch(error){
-      console.error(error);
+      console.error(error.toString());
       this.errorMsj();
     }
     finally{
@@ -225,7 +229,7 @@ export default {
       }
     },
     async savePuerto() {
-     
+      this.disabled = true;
       const msj = this.validPuerto()
 
       if(!msj){
@@ -243,13 +247,11 @@ export default {
 
     },
     async crearPuerto(puerto){
-      console.log("crearPuerto");
+
       try{
         const response = await puertoService.save(puerto)
-        console.log(response);
 
         this.$store.commit('addPuerto', response.data.data);
-
         this.successMsj(`Se creo el Puerto ${puerto.nombre}`)
         
 
@@ -263,9 +265,7 @@ export default {
       try{
         const response = await puertoService.update(puerto)
         console.log(response);
-
         this.$store.commit('updatePuerto', puerto)
-
         this.successMsj(`Se edito el Puerto ${puerto.nombre}`)
 
       }catch(error){
@@ -273,16 +273,13 @@ export default {
         this.errorMsj();
       }
     },
-    showPuerto(item) {
-      console.log(item);      
+    showPuerto(item) {    
       this.readonly = true;
       this.setPuerto(item)
 
     },
     setPuerto(item) {
-      console.log(item.puerto);
       this.$store.commit('setPuerto', item.puerto);
-
       this.dialog = true;
     },
     deletePuerto(id) {
@@ -342,12 +339,10 @@ export default {
         const response = await puertoService.findByPort(puerto);
 
         if(response.data.data){
-
           const Q = response.data.data._id !== this.$store.state.puerto._id;
 
           if(Q){
             alert(`El puerto ${puerto} no esta disponible`)
-            console.log(event.target)
             event.target.focus()
           }
         }

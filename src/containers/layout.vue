@@ -6,20 +6,20 @@
       clipped
     >
       <v-list dense>
-        <v-list-item link>
+        <v-list-item link @click="goTo('Puertos')">
           <v-list-item-action>
-            <v-icon>mdi-view-dashboard</v-icon>
+            <v-icon>mdi-wifi</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title>Dashboard</v-list-item-title>
+            <v-list-item-title>Puertos</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item link>
+        <v-list-item link @click="logout">
           <v-list-item-action>
-            <v-icon>mdi-settings</v-icon>
+            <v-icon>mdi-exit-to-app</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title>Settings</v-list-item-title>
+            <v-list-item-title>Salir</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -28,7 +28,7 @@
     <v-app-bar
       app
       clipped-left
-      class="mb-10 pb-10"
+      class="mb-10 pb-10 primary"
     >
       <v-app-bar-nav-icon @click.stop="toggleDrawer" />
       <v-toolbar-title>
@@ -45,16 +45,24 @@
       
       <v-toolbar-title>
         <v-btn
-          href="/"
+          @click="goTo('Puertos')"
           text
            >
           <span class="mr-2">M@n Solutions</span>
         </v-btn>
       </v-toolbar-title>
-
-
-
+     
       <v-spacer></v-spacer>
+
+       <v-toolbar-title>
+          <span class="mr-2"> {{ user.username }} </span>
+      </v-toolbar-title>
+
+      <v-btn icon @click="logout">
+        <v-icon>mdi-exit-to-app</v-icon>
+      </v-btn>
+
+   
     </v-app-bar>
 
     <v-content>
@@ -67,39 +75,49 @@
           justify="center"
         >
 
-            <PuertosTable />
+          <router-view />
 
         </v-row>
       </v-container>
     </v-content>
 
-    <v-footer app>
+    <v-footer app align="center">
       <span>&copy; powerby LL 2020</span>
     </v-footer>
   </v-app>
 </template>
 
 <script>
-  import PuertosTable from '../components/HelloWorld';
+  import storageService from '../services/storageService';
 
   export default {
-    name: 'Layout',
-    
-    components: {
-      PuertosTable,
-    },    
+    name: 'Layout',    
     data: () => ({
       drawer: false,
-    }),
-    created () {
-      console.log("vuetify:", this.$vuetify);
-      //this.$vuetify.theme.dark = true
+      user : {},
+    }),   
+    created(){
+      const user = storageService.getUser();
+      const token = storageService.getToken();
+
+      !user || !token
+      ? this.$router.push({name: 'Login'})
+      : this.user = user
+    },
+    mounted () {
     },
     methods:{
       toggleDrawer(){
         this.drawer = !this.drawer;
+      },
+      logout(){
+        storageService.clear();
+        this.goTo('Login')
+      },
+      goTo(address){
+        this.$router.push({name: address})
       }
-    }
-  }
 
-  </script>
+    },
+}
+</script>

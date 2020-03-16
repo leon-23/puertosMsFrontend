@@ -42,8 +42,9 @@ const initialState = () => {
     items: [],
     search: undefined
   }
- };
+};
 
+//retorna el indice de un puerto
 const findPuerto = (array, id)=>{
    return array.findIndex( item => item.puerto._id === id );
 }
@@ -52,18 +53,17 @@ const store = new Vuex.Store({
   state: { ...initialState() },
 
   mutations: {
-     
      setItems(state, items){
-       state.items = items;
+       state.items = items.slice();
      },
      setLoading(state){
        state.loading = !state.loading
      },
      setPuerto(state, puerto){
-       state.puerto = {...puerto };
+       state.puerto = { ...puerto };
      },
      resetPuerto(state){
-       state.puerto = {...initialState().puerto }
+       state.puerto = { ...initialState().puerto }
      },
      addPuerto(state, puerto){
        const items = state.items.slice();
@@ -86,8 +86,6 @@ const store = new Vuex.Store({
        if(idx >= 0)
          state.items.splice(idx, 1);
      },
-
-     
   },
 });
 
